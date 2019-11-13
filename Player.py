@@ -11,7 +11,7 @@ class Player(Game):
         self.playing = True # if fold, turn it to false
         raise NotImplementedError()
 
-    def bet(self, action, amount):
+    def bet(self, action, amount): 
         """
         Decides whether the player would like to
         call fold or raise. Returns a tuple with 
@@ -40,7 +40,10 @@ class Player(Game):
                 print("Your hand: " + self.hand)
                 break
 
-        raise NotImplementedError()
+        raise NotImplementedError() #Not sure who is working on this but plz add timer(15secs) with automatic fold if time out to match game class
+        #We need scanner for terminal to read bet amount
+        #The Call action should also reduce player money and add to pot
+
 
 
 

@@ -46,13 +46,18 @@ class Game(object):
         all players but 1 are bankrupt or the user
         want's the game to stop
         """
+        bankrupt = false
+        while(not bankrupt):
+            for player in self.players:
+                if((player.money == 0) or (player.money < self.min)):
+
         raise NotImplementedError()
 
     def shuffleDeck(self):
         """
         Shuffles Deck does not return anything
         """
-        random.shuffle(self.DECK)
+        random.shuffle(self.deck)
 
     def assignCards(self):
         """
@@ -62,23 +67,41 @@ class Game(object):
         Gives 1 card to board for round 4
         Gives 1 card to board for round 5
         """
+        self.shuffleDeck()
         if(self.round == 1):
-            for player in players:
-                player.hand.append(self.DECK.pop())
-                player.hand.append(self.DECK.pop())
+            for player in self.players:
+                player.hand.append(self.deck.pop())
+                player.hand.append(self.deck.pop())
         elif(self.round == 2):
-            board.append(self.DECK.pop())
-            board.append(self.DECK.pop())
-            board.append(self.DECK.pop())
+            board.append(self.deck.pop())
+            board.append(self.deck.pop())
+            board.append(self.deck.pop())
         elif(self.round == 3):
-            board.append(self.DECK.pop())
+            board.append(self.deck.pop())
         elif(self.round == 4):
-            board.append(self.DECK.pop())
+            board.append(self.deck.pop())
         elif(self.round == 5):
-            board.append(self.DECK.pop())
+            board.append(self.deck.pop())
         else:
-            "Game has Finished"
+            print("Game has Finished")
+    def playRound(self):
+        """
+        Does not change the order of players playing the game // We can change this later, but might be easier for Neural net if bot always goes second or first
+        //Shuffles Deck
+        //Assigns cards to player
+        //Collect bets
+        //Increasess round
+        """
+        self.shuffleDeck()
+        if((self.round >= 1) and (self.round <=5)):
+            self.assignCards
 
+            for player in self.players:
+                player.bet()
+            self.round+=1
+        else:
+            print("Game Class playRound Error")
+    
      
 
         
