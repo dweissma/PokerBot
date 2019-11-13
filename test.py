@@ -1,5 +1,11 @@
 from threading import Timer
+from itertools import product
+from random import shuffle
 
+RANKS = ['2', '3','4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+SUITS = ['H', 'D', 'S', 'C'] # Heart-H, Diamond-D, Spade-S, Club-C
+
+DECK = list(product(RANKS, SUITS))
 
 # def ac():
 #
@@ -68,6 +74,35 @@ from threading import Timer
 #     return action
 #
 # print(get())
-card = input("Enter: ")
-print(type(card))
+# card = input("Enter: ")
+# print(type(card))
 
+print(DECK.pop())
+
+shuffle(DECK)
+
+cards = DECK[0:1]
+for i in range(0, len(cards)):
+    print("     ______ ", end="")
+print()
+for i in range(0, len(cards)):
+    if len(cards[i][0]) == 1:
+        print("    |"+cards[i][0]+"     |", end="")
+    else:
+        print("    |"+cards[i][0]+"    |", end="")
+
+print()
+for i in range(0, len(cards)):
+    print("    |      |", end="")
+print()
+for i in range(0, len(cards)):
+    print("    |      |", end="")
+print()
+for i in range(0, len(cards)):
+    print("    |     "+cards[i][1]+"|", end="")
+print()
+for i in range(0, len(cards)):
+    print("     ------ ", end="")
+print()
+for i in range(0, len(cards)):
+    print("       "+str(i+1)+"    ", end="")

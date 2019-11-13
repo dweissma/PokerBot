@@ -32,8 +32,45 @@ class Player(object):
 
 
 
-        raise NotImplementedError() 
+        # raise NotImplementedError()
 
+    def cardPrinter(self, cards):
+        """
+        Print a group of cards in a decent way
+         ______
+        |4     | 
+        |      |
+        |      |
+        |     D|
+         ------
+           1
+        :param cards: a list of cards
+        :return: None
+        """
+        l = len(cards)
+        for i in range(0, l):
+            print("     ______ ", end="")
+        print()
+        for i in range(0, l):
+            if len(cards[i][0]) == 1:
+                print("    |" + cards[i][0] + "     |", end="")
+            else:
+                print("    |" + cards[i][0] + "    |", end="")
+        print()
+        for i in range(0, l):
+            print("    |      |", end="")
+        print()
+        for i in range(0, l):
+            print("    |      |", end="")
+        print()
+        for i in range(0, l):
+            print("    |     " + cards[i][1] + "|", end="")
+        print()
+        for i in range(0, l):
+            print("     ------ ", end="")
+        print()
+        for i in range(0, l):
+            print("       " + str(i + 1) + "    ", end="")
 
 
 
