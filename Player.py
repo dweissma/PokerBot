@@ -11,7 +11,7 @@ class Player(Game):
         self.playing = True # if fold, turn it to false
         raise NotImplementedError()
 
-    def bet(self, action, amount):
+    def bet(self, action, amount): 
         """
         Decides whether the player would like to
         call fold or raise. Returns a tuple with 
@@ -32,7 +32,8 @@ class Player(Game):
 
 
 
-        raise NotImplementedError()
+        raise NotImplementedError() 
+
 
 
 
