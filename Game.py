@@ -22,6 +22,8 @@ class Game(object):
 
     def __init__(self, players, money):
         self.players = []
+        self.board = [] ## 5 cards on board
+        self.round = 0 
         self.initialMoney = money
         self.publicCards = []
         self.stage = Game.STAGES['begin']
@@ -50,8 +52,35 @@ class Game(object):
         """
         Shuffles Deck does not return anything
         """
-        random.shuffle(DECK)
-    
+        random.shuffle(self.DECK)
+
+    def assignCards(self):
+        """
+        Assigns 2 cards to each player for round 1
+        Gives 3 cards to board for round 2
+        Gives 1 card to board for round 3
+        Gives 1 card to board for round 4
+        Gives 1 card to board for round 5
+        """
+        if(self.round == 1):
+            for player in players:
+                player.hand.append(self.DECK.pop())
+                player.hand.append(self.DECK.pop())
+        elif(self.round == 2):
+            board.append(self.DECK.pop())
+            board.append(self.DECK.pop())
+            board.append(self.DECK.pop())
+        elif(self.round == 3):
+            board.append(self.DECK.pop())
+        elif(self.round == 4):
+            board.append(self.DECK.pop())
+        elif(self.round == 5):
+            board.append(self.DECK.pop())
+        else:
+            "Game has Finished"
+
+     
+
         
     
     
