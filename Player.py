@@ -5,13 +5,13 @@ File for basic player class
 from Game import Game
 
 class Player(Game):
-    def __init__(self):
-        self.hand = None #The player's hand
-        self.money = None #How much money/chips the player has
+    def __init__(self, money):
+        self.hand = [] #The player's hand
+        self.money = money #How much money/chips the player has
         self.playing = True # if fold, turn it to false
         raise NotImplementedError()
 
-    def bet(self, action, amount):
+    def bet(self, action, amount): 
         """
         Decides whether the player would like to
         call fold or raise. Returns a tuple with 
@@ -20,27 +20,20 @@ class Player(Game):
         The second element being the amount of the bet
         if applicable
         return -1 if not
-
         """
-        # to ensure a valid input
-        while True:
-            if action == 'r':
-                # In case the player gives an invalid amount
-                while True:
-                    # should add some rules
-                    # amount = int(input("How much do you want to raise? "))
-                    if amount >= self.min:
-                        self.money -= amount
-                        self.pot += amount
-                        break
-            elif action == 'f':
-                self.playing = False
-                break
-            elif action == 'c':
-                print("Your hand: " + self.hand)
-                break
 
-        raise NotImplementedError()
+        if action == 'r':
+            self.money -= amount
+            self.pot += amount
+        elif action == 'c':
+            print("Hand: "+self.hand)
+        else:
+            self.playing = False
+
+
+
+        raise NotImplementedError() 
+
 
 
 
