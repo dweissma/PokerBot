@@ -37,6 +37,7 @@ class User(Player):
             self.bet('f', -1)
         else:
             # if we get a 'q', quit the game
+            print("Player quit the game!")
             os.quit()
 
     raise NotImplementedError()
