@@ -10,10 +10,13 @@ class Game(object):
         'river':'R',
     }    
 
-    def __init__(self):
+    def __init__(self, players, money):
         self.players = []
+        self.initialMoney = money
         self.publicCards = []
         self.stage = Game.STAGES['begin']
+        self.pot = 0
+        self.min = 0 # every time you bet, should greater than this number
         raise NotImplementedError()
 
     def play_hand(self):
