@@ -32,9 +32,7 @@ class Player(Game):
 
 
 
-        raise NotImplementedError() #Not sure who is working on this but plz add timer(15secs) with automatic fold if time out to match game class
-        #We need scanner for terminal to read bet amount
-        #The Call action should also reduce player money and add to pot
+        raise NotImplementedError() 
 
 
 
