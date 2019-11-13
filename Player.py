@@ -5,8 +5,8 @@ File for basic player class
 from Game import Game
 
 class Player(Game):
-    def __init__(self, money, hand):
-        self.hand = hand #The player's hand
+    def __init__(self, money):
+        self.hand = [] #The player's hand
         self.money = money #How much money/chips the player has
         self.playing = True # if fold, turn it to false
         raise NotImplementedError()
