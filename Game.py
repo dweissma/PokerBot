@@ -45,6 +45,13 @@ class Game(object):
         want's the game to stop
         """
         raise NotImplementedError()
+
+    def shuffleDeck(self):
+        """
+        Shuffles Deck does not return anything
+        """
+        random.shuffle(DECK)
+    
         
     
     
