@@ -15,23 +15,37 @@ def filter_by_rank(rank, cards):
 
 class AI(Player):
     CARDSLEFT = {
+        'P': 7,
         'B': 5,
         'F': 2,
         'T': 1,
         'R': 0,
     }  
 
+    def __init__(self, money):
+        super().__init__(money)
+
     def play(self):
         # the ai always raise a minimum
         self.bet('r', self.min)
 
     def calc_self_probs(self, game: Game):
-        cards = self.hand + game.publicCards
+        cards = self.hand + game.board
         players = len(game.players)
         cardsInDeck = len(game.deck)
         unknownCards = cardsInDeck + (players-1) * 2
         left = self.CARDSLEFT[game.stage]
-
+        self.probs = {}
+        self.probs['RF'] = self.royal_flush(game, cards, cardsInDeck, left) 
+        self.probs['SF'] = self.straight_flush(game, cards, cardsInDeck, left) 
+        self.probs['FK'] = self.four_of_a_kind(game, cards, cardsInDeck, left) 
+        self.probs['FH'] = self.full_house(game, cards, cardsInDeck, left)
+        self.probs['FL'] = self.flush(game, cards, cardsInDeck, left) - self.probs['RF'] -self.probs['SF']
+        self.probs['ST'] = self.straight(game, cards, cardsInDeck, left) -self.probs['RF'] - self.probs['SF']
+        self.probs['TK'] = self.three_of_a_kind(game, cards, cardsInDeck, left) - self.probs['FK'] - self.probs['FH']
+        self.probs['TP'] = self.two_pair(game, cards, cardsInDeck, left) - self.probs['FH']
+        self.probs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.probs['FH'] - self.probs['TK'] -self.probs['TP'] - self.probs['FK']
+        print(self.probs)
 
     def royal_flush(self, game: Game, cards, inDeck, left):
         known = len(cards)
@@ -55,7 +69,7 @@ class AI(Player):
     def straight_flush(self, game:Game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
-        allFlushes = [set(game.RANKS[x:x+5]) for x in range(0, 8)]
+        allFlushes = [game.RANKS[x:x+5] for x in range(0, 8)]
         for suit in game.SUITS:
             suitCards = filter_by_suit(suit, cards)
             suitRanks = [x[1] for x in suitCards]
@@ -67,9 +81,10 @@ class AI(Player):
                     N = 52 - wrong - 5 #Number of unknowns which don't contribute and can be dealt
                     k = freedom #Number of spots to deal noncontributing cards to
                     flushProb = comb(N, k)/comb(52-known, left)
-                    if flushes[0]-1 in suitRanks:
+                    less1 = game.RANKS[game.RANKS.index(flushes[0])-1]
+                    if less1 in suitRanks and less1 != 'A':
                         prob1less = 1
-                    elif flushes[0]-1 >= 2:
+                    elif less1 != 'A':
                         prob1less = comb(N-1, k-1)/comb(52-known, left)
                     else:
                         prob1less = 0
@@ -132,7 +147,7 @@ class AI(Player):
     def straight(self, game:Game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
-        allFlushes = [set(game.RANKS[x:x+5]) for x in range(0, 8)]
+        allFlushes = [game.RANKS[x:x+5] for x in range(0, 9)]
         ranks = [x[1] for x in cards]
         for flushes in allFlushes:
                 combined = len(set(ranks).intersection(flushes))
@@ -142,9 +157,10 @@ class AI(Player):
                     N = 52 - wrong - 5 #Number of unknowns which don't contribute and can be dealt
                     k = freedom #Number of spots to deal noncontributing cards to
                     flushProb = (4**(5-combined))*comb(N, k)/comb(52-known, left)
-                    if flushes[0]-1 in ranks:
+                    less1 = game.RANKS[game.RANKS.index(flushes[0])-1]
+                    if less1 in ranks and less1 != 'A':
                         prob1less = 1
-                    elif flushes[0]-1 >= 2:
+                    elif  less1 != 'A':
                         prob1less = 4 * comb(N-1, k-1)/comb(52-known, left)
                     else:
                         prob1less = 0
@@ -166,7 +182,7 @@ class AI(Player):
                 N = 52 - wrong - 3
                 k = freedom
                 rankProb = comb(4-rankCount,1)*(comb(N, k)/comb(52-known, left)) # 4C1 ways to make this particular 3 of a kind (since we ignored suit)
-                for ranks in filter(lambda x: x < rank, game.RANK):
+                for ranks in filter(lambda x: x < rank, game.RANKS):
                     rankCount = len(filter_by_rank(rank, cards))
                     wrong = known - rankCount
                     freedomMut = freedom - (3-rankCount)
@@ -228,3 +244,9 @@ class AI(Player):
                 rankProb = comb(4-rankCount, 2) * (comb(N, k)/comb(52-known, left)) #4C2 ways to make this particular pair (since we ignored suit)
                 cumProb += rankProb
         return cumProb
+
+if __name__ == '__main__':
+    g = Game(0)
+    g.stage = 'P'
+    p = AI(0)
+    p.calc_self_probs(g)

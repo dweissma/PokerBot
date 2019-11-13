@@ -10,6 +10,7 @@ from copy import deepcopy
 
 class Game(object):
     STAGES = {
+        'prehand':'P', #Stage of the game before any players are actually dealt
         'begin':'B',
         'flop':'F',
         'turn':'T',
@@ -31,7 +32,7 @@ class Game(object):
         self.stage = Game.STAGES['begin']
         self.pot = 0
         self.min = 0 # every time you bet, should greater than this number
-        # self.deck = self.DECK[:]
+        self.deck = self.DECK[:]
         # shuffle(self.deck)
         # raise NotImplementedError()
 

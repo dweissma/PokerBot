@@ -5,12 +5,11 @@ File for basic player class
 from Game import Game
 
 
-class Player(Game):
+class Player(object):
     def __init__(self, money):
         self.hand = [] #The player's hand
         self.money = money #How much money/chips the player has
         self.isPlaying = True # if fold, turn it to false
-        raise NotImplementedError()
 
     def bet(self, action, amount): 
         """
