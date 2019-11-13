@@ -50,21 +50,24 @@ from threading import Timer
 # if __name__ == '__main__':
 #     mytest()
 
-import time
-from func_timeout import func_set_timeout
-import func_timeout
+# import time
+# from func_timeout import func_set_timeout
+# import func_timeout
+#
+# @func_set_timeout(5)
+# def task():
+#     action = input("Enter")
+#     return action
+#
+# def get():
+#     action = ""
+#     try:
+#         action = task()
+#     except func_timeout.exceptions.FunctionTimedOut:
+#         action = 'f'
+#     return action
+#
+# print(get())
+card = input("Enter: ")
+print(type(card))
 
-@func_set_timeout(5)
-def task():
-    action = input("Enter")
-    return action
-
-def get():
-    action = ""
-    try:
-        action = task()
-    except func_timeout.exceptions.FunctionTimedOut:
-        action = 'f'
-    return action
-
-print(get())
