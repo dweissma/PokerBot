@@ -161,10 +161,21 @@ class AI(Player):
             rankCount = len(filter_by_rank(rank, cards))
             wrong = known - rankCount
             freedom = left - (3-rankCount)
+            rankProb = 0
             if freedom >= 0:
                 N = 52 - wrong - 3
                 k = freedom
                 rankProb = comb(4-rankCount,1)*(comb(N, k)/comb(52-known, left)) # 4C1 ways to make this particular 3 of a kind (since we ignored suit)
+                for ranks in filter(lambda x: x < rank, game.RANK):
+                    rankCount = len(filter_by_rank(rank, cards))
+                    wrong = known - rankCount
+                    freedomMut = freedom - (3-rankCount)
+                    mutProb = 0
+                    if freedomMut >= 0:
+                        N = 52 - wrong - 3
+                        k = freedomMut
+                        mutProb = comb(4-rankCount,1)*(comb(N, k)/comb(52-known, freedom))
+                rankProb -= mutProb
                 cumProb += rankProb
         return cumProb
 
@@ -177,6 +188,7 @@ class AI(Player):
             ranksCount = rank1Count + rank2Count
             wrong = known - ranksCount
             freedom = left - (4-ranksCount)
+            pairProb = 0
             if freedom >= 0:
                 N = 52 - wrong - 4
                 k = freedom
@@ -188,7 +200,19 @@ class AI(Player):
                     pairProb = comb(4-rank1Count, 2) * comb(N, k)/comb(52-known, left)
                 else:
                     pairProb = 1
-                cumProb += pairProb
+            mutProb = 0
+            for rank in game.RANKS:
+                if rank not in pair and rank < min(pair):
+                    rankCount = len(filter_by_rank(rank, cards))
+                    wrong = known - rankCount
+                    freedomMut = freedom - (2-rankCount)
+                    if freedomMut >= 0:
+                        N = 52 - wrong - 2
+                        k = freedomMut
+                        rankProb = comb(4-rankCount, 2) * (comb(N, k)/comb(52-known, freedom)) #4C2 ways to make this particular pair (since we ignored suit)
+                        mutProb += rankProb
+            pairProb -= mutProb
+            cumProb += pairProb
         return cumProb
 
     def pair(self, game:Game, cards, inDeck, left):
