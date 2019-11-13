@@ -14,7 +14,6 @@ class User(Player):
         return input("It's your turn: ")
 
     def play(self):
-
         # get a valid action
         while True:
             try:
@@ -52,6 +51,18 @@ class User(Player):
             print("Player quit the game!")
             os.quit()
 
-    raise NotImplementedError()
+    # raise NotImplementedError()
+
+    def select_five_card(self):
+        # print("Community cards: " + self.board)
+        # print("Hand: "+self.hand)
+        cards = self.board + self.hand
+        print("Cards: " + cards)
+        selected_cards = []
+        for i in range(0, 5):
+            index = int(input("Choose one card: "))
+            selected_cards.append(cards[index])
+
+        return selected_cards
 
 
