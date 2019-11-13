@@ -23,9 +23,8 @@ class Game(object):
     def __init__(self, players, money):
         self.players = []
         self.board = [] ## 5 cards on board
-        self.round = 0 
+        self.round = 1
         self.initialMoney = money
-        self.publicCards = []
         self.stage = Game.STAGES['begin']
         self.pot = 0
         self.min = 0 # every time you bet, should greater than this number
@@ -45,13 +44,24 @@ class Game(object):
         Plays hands of texas holdem until either
         all players but 1 are bankrupt or the user
         want's the game to stop
+        Resets variables after game is finished
         """
-        bankrupt = false
+        bankrupt = False
         while(not bankrupt):
             for player in self.players:
                 if((player.money == 0) or (player.money < self.min)):
+                    bankrupt = True
+            if bankrupt: 
+                break
+            else:
+                self.playRound
+                if(self.round > 5):
+                    self.round = 1
+                    self.pot = 0
+                    self.board = []
+                    self.deck = self.DECK[:]
 
-        raise NotImplementedError()
+        
 
     def shuffleDeck(self):
         """
