@@ -126,7 +126,6 @@ class AI(Player):
                 N = 52 - wrong - 5
                 k = freedom
                 suitProb = comb(13-suitCount, 5-suitCount) * comb(N, k)/comb(52-known, left)
-                
                 cumProb += suitProb
         return cumProb
 
