@@ -53,15 +53,20 @@ class User(Player):
 
     # raise NotImplementedError()
 
-    def select_five_card(self):
-        # print("Community cards: " + self.board)
-        # print("Hand: "+self.hand)
+    def select_five_cards(self):
+        print("Choose five cards from the following: ")
         cards = self.board + self.hand
-        print("Cards: " + cards)
+        self.cardPrinter(cards)
         selected_cards = []
-        for i in range(0, 5):
+        selected_indices = []
+        while len(selected_indices) <= 5:
             index = int(input("Choose one card: "))
-            selected_cards.append(cards[index])
+
+            if index in selected_indices:
+                print("You already have it. Choose another one!")
+            else:
+                selected_indices.append(index)
+                selected_cards.append(cards[index])
 
         return selected_cards
 
