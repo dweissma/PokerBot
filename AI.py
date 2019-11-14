@@ -28,7 +28,7 @@ class AI(Player):
         # the ai always raise a minimum
         self.bet('r', self.min)
 
-    def calc_self_probs(self, game: Game):
+    def calc_self_probs(self, game):
         cards = self.hand + game.board
         players = len(game.players)
         cardsInDeck = len(game.deck)
@@ -46,7 +46,7 @@ class AI(Player):
         self.probs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.probs['FH'] - self.probs['TK'] -self.probs['TP'] - self.probs['FK']
         print(self.probs)
 
-    def royal_flush(self, game: Game, cards, inDeck, left):
+    def royal_flush(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         rRanks = set(game.RANKS[-5:])
@@ -65,7 +65,7 @@ class AI(Player):
                 continue
         return cumProb
 
-    def straight_flush(self, game:Game, cards, inDeck, left):
+    def straight_flush(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         allFlushes = [game.RANKS[x:x+5] for x in range(0, 8)]
@@ -92,7 +92,7 @@ class AI(Player):
                     cumProb += flushProb
         return cumProb
 
-    def four_of_a_kind(self, game:Game, cards, inDeck, left):
+    def four_of_a_kind(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         for rank in game.RANKS:
@@ -106,7 +106,7 @@ class AI(Player):
                 cumProb += rankProb
         return cumProb
 
-    def full_house(self, game:Game, cards, inDeck, left):
+    def full_house(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         for pair in combinations(game.RANKS, 2):
@@ -129,7 +129,7 @@ class AI(Player):
                 cumProb += pairProb
         return cumProb
 
-    def flush(self, game:Game, cards, inDeck, left):
+    def flush(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         for suit in game.SUITS:
@@ -143,7 +143,7 @@ class AI(Player):
                 cumProb += suitProb
         return cumProb
 
-    def straight(self, game:Game, cards, inDeck, left):
+    def straight(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         allFlushes = [game.RANKS[x:x+5] for x in range(0, 9)]
@@ -163,12 +163,12 @@ class AI(Player):
                         prob1less = 4 * comb(N-1, k-1)/comb(52-known, left)
                     else:
                         prob1less = 0
-                    mutprob = prob1less * flushProb
+                    mutprob = prob1less 
                     flushProb -= mutprob
                     cumProb += flushProb
         return cumProb
 
-    def three_of_a_kind(self, game:Game, cards, inDeck, left):
+    def three_of_a_kind(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         for rank in game.RANKS:
@@ -193,7 +193,7 @@ class AI(Player):
                 cumProb += rankProb
         return cumProb
 
-    def two_pair(self, game:Game, cards, inDeck, left):
+    def two_pair(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         for pair in combinations(game.RANKS, 2):
@@ -224,12 +224,12 @@ class AI(Player):
                         N = 52 - wrong - 2
                         k = freedomMut
                         rankProb = comb(4-rankCount, 2) * (comb(N, k)/comb(52-known, freedom)) #4C2 ways to make this particular pair (since we ignored suit)
-                        mutProb += rankProb
+                        mutProb += rankProb * pairProb
             pairProb -= mutProb
             cumProb += pairProb
         return cumProb
 
-    def pair(self, game:Game, cards, inDeck, left):
+    def pair(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
         for rank in game.RANKS:

@@ -181,6 +181,8 @@ class Game(object):
         raise NotImplementedError()
 
 
-
-        
-    
+if __name__ == '__main__':
+    g = Game(0)
+    g.stage = 'P'
+    p = AI(0)
+    p.calc_self_probs(g)
