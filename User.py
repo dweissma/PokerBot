@@ -53,7 +53,7 @@ class User(Player):
 
     # raise NotImplementedError()
 
-    def select_five_card(self):
+    def select_five_cards(self):
         print("Choose five cards from the following: ")
         cards = self.board + self.hand
         self.cardPrinter(cards)

@@ -6,7 +6,8 @@ from itertools import product
 from random import shuffle
 from AI import AI
 from User import User
-from copy import deepcopy
+import heapq
+# from copy import deepcopy
 
 class Game(object):
     STAGES = {
@@ -36,12 +37,12 @@ class Game(object):
         # shuffle(self.deck)
         # raise NotImplementedError()
 
-    def play_hand(self):
-        """
-        Plays through a single hand of texas holdem
-        using the current amounts of money each player has
-        """
-        raise NotImplementedError()
+    # def play_hand(self):
+    #     """
+    #     Plays through a single hand of texas holdem
+    #     using the current amounts of money each player has
+    #     """
+    #     raise NotImplementedError()
 
     def play_game(self):
         """
@@ -137,7 +138,50 @@ class Game(object):
         """
         Decides who wins the pot
         """
+        # {player's rank: index in self.players}
+        player_with_ranks= {}
+        for i in range(0, len(self.players)):
+            player = self.players[i]
+            # if player doesn't fold
+            if player.isPlaying:
+                # tell him to select 5 cards among his hand and 5 community cards
+                # find the rank of these cards
+                rank = player.in_which_rank(player.select_five_cards())
+                player_with_ranks[rank] = i
+
+        # if only one player is still on the board
+        # give him the money and initialize the game
+        if len(player_with_ranks) == 1:
+            self.players[player_with_ranks.values()[0]].money += self.pot
+            self.round = 1
+            self.pot = 0
+            self.board = []
+            self.deck = self.DECK[:]
+            return
+
+        # if we have more than two players left
+        # compare their hands
+        rankQueue = []
+        for rank in player_with_ranks.keys():
+            rankQueue.append(rank)
+        rankQueue.sort()
+
+        # if first two players are not in the same rank
+        # give money to the first player
+        if rankQueue[0][0] != rankQueue[1][0]:
+            self.players[player_with_ranks[rankQueue[0]]].money += self.pot
+            self.round = 1
+            self.pot = 0
+            self.board = []
+            self.deck = self.DECK[:]
+            return
+
+        # if first two player are in the same rank
+        # compare the numerical values of their hands
         raise NotImplementedError()
+
+
+
         
     
     

@@ -245,6 +245,9 @@ class AI(Player):
                 cumProb += rankProb
         return cumProb
 
+    def select_five_cards(self):
+        raise NotImplementedError()
+
 if __name__ == '__main__':
     g = Game(0)
     g.stage = 'P'
