@@ -65,10 +65,10 @@ class Game(object):
                 self.playRound()
                 if(self.round > 5):
                     self.showdown()
-                    self.round = 1
-                    self.pot = 0
-                    self.board = []
-                    self.deck = deepcopy(self.DECK)
+                    # self.round = 1
+                    # self.pot = 0
+                    # self.board = []
+                    # self.deck = deepcopy(self.DECK)
 
         
 

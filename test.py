@@ -81,7 +81,7 @@ print(DECK.pop())
 
 shuffle(DECK)
 
-cards = DECK[0:1]
+cards = DECK[0:7]
 for i in range(0, len(cards)):
     print("     ______ ", end="")
 print()

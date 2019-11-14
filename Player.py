@@ -38,7 +38,7 @@ class Player(object):
         """
         Print a group of cards in a decent way
          ______
-        |4     | 
+        |4     |
         |      |
         |      |
         |     D|
@@ -72,5 +72,34 @@ class Player(object):
         for i in range(0, l):
             print("       " + str(i + 1) + "    ", end="")
 
+    """
+    The following methods are used to decide which rank are the 5 selected cards in
+    """
 
+    def is_royal_flush(self, cards):
 
+        raise NotImplementedError()
+
+    def is_straight_flush(self, cards):
+        raise NotImplementedError()
+
+    def is_four_of_a_kind(self, cards):
+        raise NotImplementedError()
+
+    def is_full_house(self, cards):
+        raise NotImplementedError()
+
+    def is_flush(self, cards):
+        raise NotImplementedError()
+
+    def is_straight(self, cards):
+        raise NotImplementedError()
+
+    def is_three_of_a_kind(self, cards):
+        raise NotImplementedError()
+
+    def is_two_pairs(self, cards):
+        raise NotImplementedError()
+
+    def is_pair(self, cards):
+        raise NotImplementedError()
