@@ -132,13 +132,25 @@ class Game(object):
             self.round += 1
         else:
             print("Game Class playRound Error")
-    
-     
+
+    def unique(self, iterable):
+        """
+        Give a iterable object, return the unique values in it
+        and corresponding counters
+        The method is given by Professor Saúl Blanco
+        """
+        items = list(iterable)
+        unique_items = list(set(items))
+        counts = [items.count(item) for item in unique_items]
+        return unique_items, counts
+
+
     def showdown(self):
         """
         Decides who wins the pot
         """
         # {player's rank: index in self.players}
+        # play's rank = (rank, a tuple which contains the numerical values of the cards)
         player_with_ranks= {}
         for i in range(0, len(self.players)):
             player = self.players[i]
@@ -176,9 +188,117 @@ class Game(object):
             self.deck = self.DECK[:]
             return
 
-        # if first two player are in the same rank
-        # compare the numerical values of their hands
+        """
+        If first two player (we only consider two players so far) are in the same rank
+        compare the numerical values of their hands
+        """
+        # it's impossible that two players both have a royal flush
+        # so we skip it
+
+        winner = []
+        if rankQueue[0][0] == 2:
+            # straight flush
+            # we compare the greatest cards in each combination
+            if rankQueue[0][1][4] < rankQueue[1][1][4]:
+                winner.append(player_with_ranks[rankQueue[1]])
+            else:
+                winner.append(player_with_ranks[rankQueue[0]])
+
+        elif rankQueue[0][0] == 3:
+            # four of a kind
+            # since the players must have the same card that appear 4 times
+            # so we just need to compare the fifth card
+            four1 = rankQueue[0][1][2]
+            four2 = rankQueue[1][1][2]
+            # find the fifth card
+            if four1 == rankQueue[0][1][0]:
+                fifth_card1 = rankQueue[0][1][4]
+            else:
+                fifth_card1 = rankQueue[0][1][0]
+
+            if four2 == rankQueue[1][1][0]:
+                fifth_card2 = rankQueue[1][1][4]
+            else:
+                fifth_card2 = rankQueue[1][1][0]
+
+            if fifth_card1 < fifth_card2:
+                winner.append(player_with_ranks[rankQueue[1]])
+            elif fifth_card2 == fifth_card1:
+                winner.append(player_with_ranks[rankQueue[0]])
+                winner.append(player_with_ranks[rankQueue[1]])
+            else:
+                winner.append(player_with_ranks[rankQueue[0]])
+
+        elif rankQueue[0][0] == 4:
+            # full house
+            # first compare the threes
+            # if equal, then compare the twos
+            unique_cards1, counter1 = self.unique(rankQueue[0][1])
+            unique_cards2, counter2 = self.unique(rankQueue[1][1])
+
+            if counter1[0] == 3:
+                three1 = unique_cards1[0]
+                two1 = unique_cards1[1]
+            else:
+                three1 = unique_cards1[1]
+                two1 = unique_cards1[0]
+
+            if counter2[0] == 3:
+                three2 = unique_cards2[0]
+                two2 = unique_cards2[1]
+            else:
+                three2 = unique_cards2[1]
+                two2 = unique_cards2[0]
+
+            if three1 > three2:
+                winner.append(rankQueue[0])
+            elif three2 > three1:
+                winner.append(rankQueue[1])
+            elif three1 == three2:
+                if two1 > two2:
+                    winner.append(rankQueue[0])
+                elif two2 > two1:
+                    winner.append(rankQueue[1])
+                elif two1 == two2:
+                    winner.append(rankQueue[0])
+                    winner.append(rankQueue[1])
+
+        elif rankQueue[0][0] == 5:
+            # flush
+            # we compare from the greatest to the smallest
+            cards1 = rankQueue[0][1]
+            cards2 = rankQueue[1][1]
+            tie = True
+            for i in range(0, 5):
+                if cards1[i] > cards2[i]:
+                    winner.append(rankQueue[0])
+                    tie = False
+                    break
+                elif cards2[i] > cards1[i]:
+                    winner.append(rankQueue[1])
+                    tie = False
+                    break
+
+            if tie:
+                winner.append(rankQueue[0])
+                winner.append(rankQueue[1])
+
+        elif rankQueue[0][0] == 6:
+            # straight
+            # compare the greatest value in each combination
+            if rankQueue[0][1][4] > rankQueue[1][1][4]:
+                winner.append(rankQueue[0])
+            elif rankQueue[0][1][4] < rankQueue[1][1][4]:
+                winner.append(rankQueue[1])
+            else:
+                winner.append(rankQueue[0])
+                winner.append(rankQueue[1])
         raise NotImplementedError()
+
+
+
+
+
 
 
 if __name__ == '__main__':

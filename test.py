@@ -131,14 +131,23 @@ shuffle(DECK)
 #     print(p.in_which_rank(cards))
 #     print("--------------------------------------------------------")
 
-l = [(12, (3, 4)), (8, (1, 2)), (4, (4, 8))]
-d = {l[0]: 3, l[1]: 8, l[2]: 4}
-lplusd = []
-heapq.heappush(lplusd, l[0])
-heapq.heappush(lplusd, l[1])
-heapq.heappush(lplusd, l[2])
-
-lplusd.sort()
-print(lplusd)
+# l = [(12, (3, 4)), (8, (1, 2)), (4, (4, 8))]
+# d = {l[0]: 3, l[1]: 8, l[2]: 4}
+# lplusd = []
+# heapq.heappush(lplusd, l[0])
+# heapq.heappush(lplusd, l[1])
+# heapq.heappush(lplusd, l[2])
+#
+# lplusd.sort()
+# print(lplusd)
 # for i in range(0, 3):
 #     print(heapq.heappop(lplusd))
+
+def unique(iterable):
+    items = list(iterable)
+    unique_items = list(set(items))
+    counts = [items.count(item) for item in unique_items]
+    return unique_items, counts
+
+lst = (1, 1, 3, 4, 8, 1, 4)
+print(unique(lst))
