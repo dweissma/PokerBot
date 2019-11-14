@@ -3,7 +3,6 @@ Our AI which plays Texas Holdem
 """
 
 from Player import Player
-from Game import Game
 from scipy.special import comb
 from itertools import combinations
 
@@ -167,7 +166,6 @@ class AI(Player):
                     mutprob = prob1less * flushProb
                     flushProb -= mutprob
                     cumProb += flushProb
-                    cumProb += flushProb
         return cumProb
 
     def three_of_a_kind(self, game:Game, cards, inDeck, left):
@@ -245,8 +243,3 @@ class AI(Player):
                 cumProb += rankProb
         return cumProb
 
-if __name__ == '__main__':
-    g = Game(0)
-    g.stage = 'P'
-    p = AI(0)
-    p.calc_self_probs(g)

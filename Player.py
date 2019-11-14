@@ -1,8 +1,7 @@
 """
 File for basic player class
-"""
 
-from Game import Game
+"""
 
 
 class Player(object):
