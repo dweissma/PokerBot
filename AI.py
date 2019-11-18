@@ -21,6 +21,8 @@ class AI(Player):
         'R': 0,
     }  
 
+    ORDERING = ['RF', 'SF', 'FK', 'FH', 'FL', 'ST', 'TK', 'TP', 'PA']
+
     def __init__(self, money):
         super().__init__(money)
 
@@ -44,7 +46,18 @@ class AI(Player):
         self.probs['TK'] = self.three_of_a_kind(game, cards, cardsInDeck, left) - self.probs['FK'] - self.probs['FH']
         self.probs['TP'] = self.two_pair(game, cards, cardsInDeck, left) - self.probs['FH']
         self.probs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.probs['FH'] - self.probs['TK'] -self.probs['TP'] - self.probs['FK']
-        print(self.probs)
+
+    def p_oppbetter_hand(self, hand):
+        """
+        Uses the other probs dict to estimate a naive probability
+        that the opponent has a better hand than the given hand
+        """
+        if hand is None:
+            ind = len(self.ORDERING)
+        else:
+            ind = self.ORDERING.index(hand)
+        probs = [self.otherProbs[x] for x in self.ORDERING[:ind]]
+        return sum(probs)
 
     def calc_other_probs(self, game):
         cards = game.board
@@ -52,17 +65,16 @@ class AI(Player):
         cardsInDeck = len(game.deck)
         unknownCards = cardsInDeck + (players-1) * 2
         left = self.CARDSLEFT[game.stage]
-        probs = {}
-        probs['RF'] = self.royal_flush(game, cards, cardsInDeck, left) 
-        probs['SF'] = self.straight_flush(game, cards, cardsInDeck, left) 
-        probs['FK'] = self.four_of_a_kind(game, cards, cardsInDeck, left) 
-        probs['FH'] = self.full_house(game, cards, cardsInDeck, left)
-        probs['FL'] = self.flush(game, cards, cardsInDeck, left) - probs['RF'] -probs['SF']
-        probs['ST'] = self.straight(game, cards, cardsInDeck, left) -probs['RF'] - probs['SF']
-        probs['TK'] = self.three_of_a_kind(game, cards, cardsInDeck, left) - probs['FK'] - probs['FH']
-        probs['TP'] = self.two_pair(game, cards, cardsInDeck, left) - probs['FH']
-        probs['PA'] = self.pair(game, cards, cardsInDeck, left) - probs['FH'] - probs['TK'] -probs['TP'] - probs['FK']
-        return probs
+        self.otherProbs = {}
+        self.otherProbs['RF'] = self.royal_flush(game, cards, cardsInDeck, left) 
+        self.otherProbs['SF'] = self.straight_flush(game, cards, cardsInDeck, left) 
+        self.otherProbs['FK'] = self.four_of_a_kind(game, cards, cardsInDeck, left) 
+        self.otherProbs['FH'] = self.full_house(game, cards, cardsInDeck, left)
+        self.otherProbs['FL'] = self.flush(game, cards, cardsInDeck, left) - self.otherProbs['RF'] -self.otherProbs['SF']
+        self.otherProbs['ST'] = self.straight(game, cards, cardsInDeck, left) -self.otherProbs['RF'] - self.otherProbs['SF']
+        self.otherProbs['TK'] = self.three_of_a_kind(game, cards, cardsInDeck, left) - self.otherProbs['FK'] - self.otherProbs['FH']
+        self.otherProbs['TP'] = self.two_pair(game, cards, cardsInDeck, left) - self.otherProbs['FH']
+        self.otherProbs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.otherProbs['FH'] - self.otherProbs['TK'] -self.otherProbs['TP'] - self.otherProbs['FK']
 
     def royal_flush(self, game, cards, inDeck, left):
         known = len(cards)
@@ -263,6 +275,46 @@ class AI(Player):
                 rankProb -= mutProb
             cumProb += rankProb
         return cumProb
+
+    def better_hands(self, hand):
+        return self.ORDERING[:self.ORDERING.index(hand)]
+
+    def estimate_bet_prob(self, oBH, pSize, pK):
+        """
+        Function used to model the probability that an opponent will bet
+        Takes a probability that the opponent has the best hand, a pot size,
+        and a betting constant used to model how aggressive a player is
+        """
+        r = pK * pSize
+        return oBH**r
+
+    def model_opponent(self, bet, pSize=None, pK=None):
+        """
+        Returns the probability than an opponent has a better hand than you 
+        """
+        soFar = 0
+        if not bet:
+            for hands in self.ORDERING[1:]:
+                soFar += (self.p_oppbetter_hand(hands) * self.probs[hands])
+            noGood = (self.p_oppbetter_hand(None) * (1- sum(self.probs.values())))
+            if noGood <= 1 and noGood > 0:
+                soFar += noGood
+            return soFar
+        else:
+            #Calculate what the opponent thinks their probability of having the best hand is
+            p_bet = 0
+            for hands in self.ORDERING:
+                bHprob = (1-self.p_oppbetter_hand(hands)) 
+                p_bet += self.estimate_bet_prob(bHprob, pSize, pK) * self.otherProbs[hands]
+            totProb = 0
+            for hands in self.ORDERING[1:]:
+                hand_prob = 0
+                for h in self.better_hands(hands):
+                    bHprob = (1-self.p_oppbetter_hand(h)) 
+                    hand_prob += self.estimate_bet_prob(bHprob, pSize, pK) * self.otherProbs[h]
+                hand_prob = hand_prob/p_bet
+                totProb += hand_prob * self.probs[hands]
+            return totProb
 
     def select_five_cards(self):
         raise NotImplementedError()
