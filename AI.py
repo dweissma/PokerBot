@@ -64,7 +64,7 @@ class AI(Player):
         players = len(game.players)
         cardsInDeck = len(game.deck)
         unknownCards = cardsInDeck + (players-1) * 2
-        left = self.CARDSLEFT[game.stage]
+        left = 7 - len(game.board)
         self.otherProbs = {}
         self.otherProbs['RF'] = self.royal_flush(game, cards, cardsInDeck, left) 
         self.otherProbs['SF'] = self.straight_flush(game, cards, cardsInDeck, left) 
@@ -315,6 +315,18 @@ class AI(Player):
                 hand_prob = hand_prob/p_bet
                 totProb += hand_prob * self.probs[hands]
             return totProb
+
+    def prob_best_hand(self, bettors, total):
+        """
+        Takes a list of players still in the game and a list of players who bet
+        and a list of all the player still in the game
+        """
+        nonbets = [x for x in total if x not in bettors]
+        nonBetProb = self.modelOpponent(False)
+        totProb = 0
+        for x in range(len(nonbets)):
+            totProb += nonBetProb - (nonBetProb * totProb)
+            
 
     def select_five_cards(self):
         raise NotImplementedError()
