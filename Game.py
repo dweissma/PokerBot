@@ -4,6 +4,7 @@ Runs a game of texas holdem
 
 from itertools import product
 from random import shuffle
+from random import randint
 from AI import AI
 from User import User
 import heapq
@@ -62,6 +63,8 @@ class Game(object):
         self.players.append(AI(self.initialMoney))
 
         bankrupt = False
+        # a random minimum raise
+        self.min = randint(1, 20)
         while(not bankrupt):
             for player in self.players:
                 if((player.money == 0) or (player.money < self.min)):
@@ -299,8 +302,162 @@ class Game(object):
             else:
                 winner.append(rankQueue[0])
                 winner.append(rankQueue[1])
-        raise NotImplementedError()
 
+        elif rankQueue[0][0] == 7:
+            # three of a kind
+            # first compare the threes in two hands
+            unique_card1, counter1 = self.unique(rankQueue[0][1])
+            unique_card2, counter2 = self.unique(rankQueue[1][1])
+
+            three1, three2 = 0, 0
+            for i in range(0, len(counter1)):
+                if counter1[i] == 3:
+                    three1 = unique_card1[i]
+
+            for i in range(0, len(counter2)):
+                if counter2[i] == 3:
+                    three2 = unique_card2[i]
+
+            if three1 > three2:
+                winner.append(rankQueue[0])
+            elif three2 > three1:
+                winner.append(rankQueue[1])
+            elif three1 == three2:
+                two1 = []
+                two2 = []
+                for i in range(0, len(counter1)):
+                    if counter1[i] != 3:
+                        two1.append(unique_card1[i])
+                for i in range(0, len(counter2)):
+                    if counter2[i] != 3:
+                        two2.append(unique_card2[i])
+
+                greater1, smaller1 = max(two1), min(two1)
+                greater2, smaller2 = max(two2), min(two2)
+
+                if greater1 > greater2:
+                    winner.append(rankQueue[0])
+                elif greater2 > greater1:
+                    winner.append(rankQueue[1])
+                elif greater1 == greater2:
+                    if smaller1 > smaller2:
+                        winner.append(rankQueue[0])
+                    elif smaller2 > smaller1:
+                        winner.append(rankQueue[1])
+                    else:
+                        winner.append(rankQueue[0])
+                        winner.append(rankQueue[1])
+
+        elif rankQueue[0][0] == 8:
+            # two pairs
+            # we compare the two pairs and then the third cards
+            unique_card1, counter1 = self.unique(rankQueue[0][1])
+            unique_card2, counter2 = self.unique(rankQueue[1][1])
+
+            pairs1, pairs2 = [], []
+            third1, third2 = 0, 0
+            for i in range(0, len(counter1)):
+                if counter1[i] == 2:
+                    pairs1.append(unique_card1[i])
+                elif counter1[i] == 1:
+                    third1 = unique_card1[i]
+
+            for i in range(0, len(counter2)):
+                if counter2[i] == 2:
+                    pairs2.append(unique_card2[i])
+                elif counter2[i] == 1:
+                    third2 = unique_card2[i]
+
+            greater_pair1, smaller_pair1 = max(pairs1), min(pairs1)
+            greater_pair2, smaller_pair2 = max(pairs2), min(pairs2)
+            # compare
+            if greater_pair1 > greater_pair2:
+                winner.append(rankQueue[0])
+            elif greater_pair2 > greater_pair1:
+                winner.append(rankQueue[1])
+            elif greater_pair1 == greater_pair2:
+                if smaller_pair1 > smaller_pair2:
+                    winner.append(rankQueue[0])
+                elif smaller_pair2 > smaller_pair1:
+                    winner.append(rankQueue[1])
+                elif smaller_pair1 == smaller_pair2:
+                    if third1 > third2:
+                        winner.append(rankQueue[0])
+                    elif third2 > third1:
+                        winner.append(rankQueue[1])
+                    elif third2 == third1:
+                        winner.append(rankQueue[0])
+                        winner.append(rankQueue[1])
+
+        elif rankQueue[0][0] == 9:
+            # pairs
+            # first compare the pairs, then compare the other cards
+            unique_card1, counter1 = self.unique(rankQueue[0][1])
+            unique_card2, counter2 = self.unique(rankQueue[1][1])
+
+            pair1, pair2 = 0, 0
+            not_pair1, not_pair2 = [], []
+            for i in range(0, len(counter1)):
+                if counter1[i] == 1:
+                    not_pair1.append(unique_card1[i])
+                elif counter1[i] == 2:
+                    pair1 = unique_card1[i]
+
+            for i in range(0, len(counter2)):
+                if counter2[i] == 1:
+                    not_pair2.append(unique_card2[i])
+                elif counter2[i] == 2:
+                    pair2 = unique_card2[i]
+
+            not_pair1.sort()
+            not_pair2.sort()
+
+            if pair1 > pair2:
+                winner.append(rankQueue[0])
+            elif pair2 > pair1:
+                winner.append(rankQueue[1])
+            elif pair2 == pair1:
+                # if they have same pair, then compare other cards
+                for i in range(0, 3):
+                    if not_pair1[2-i] > not_pair2[2-i]:
+                        winner.append(rankQueue[0])
+                        break
+                    elif not_pair2[2-i] > not_pair1[2-i]:
+                        winner.append(rankQueue[1])
+                        break
+                    elif i == 2:
+                        winner.append(rankQueue[0])
+                        winner.append(rankQueue[1])
+                        break
+
+        elif rankQueue[0][0] == 10:
+            # highcards
+            # just compare each cards in two hands
+            unique_card1 = rankQueue[0][1]
+            unique_card2 = rankQueue[1][1]
+
+            unique_card1.sort()
+            unique_card2.sort()
+
+            for i in range(0, 5):
+                if unique_card1[4-i] > unique_card2[4-i]:
+                    winner.append(rankQueue[0])
+                    break
+                elif unique_card2[4-i] > unique_card1[4-i]:
+                    winner.append(rankQueue[1])
+                    break
+                elif i == 4:
+                    winner.append(rankQueue[0])
+                    winner.append(rankQueue[1])
+
+        # reset the game
+        for player in winner:
+            self.players[player_with_ranks[player]].money += self.pot / len(winner)
+            self.round = 1
+            self.pot = 0
+            self.board = []
+            self.deck = self.DECK[:]
+            return
 
 
 

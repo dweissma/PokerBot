@@ -1,6 +1,7 @@
 from threading import Timer
 from itertools import product
 from random import shuffle
+from random import randint
 from Player import Player
 import heapq
 
@@ -143,11 +144,14 @@ shuffle(DECK)
 # for i in range(0, 3):
 #     print(heapq.heappop(lplusd))
 
-def unique(iterable):
-    items = list(iterable)
-    unique_items = list(set(items))
-    counts = [items.count(item) for item in unique_items]
-    return unique_items, counts
+# def unique(iterable):
+#     items = list(iterable)
+#     unique_items = list(set(items))
+#     counts = [items.count(item) for item in unique_items]
+#     return unique_items, counts
+#
+# lst = (1, 1, 3, 4, 8, 1, 4)
+# print(unique(lst))
 
-lst = (1, 1, 3, 4, 8, 1, 4)
-print(unique(lst))
+for i in range(0, 100):
+    print(randint(1, 20))
