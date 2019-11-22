@@ -5,6 +5,7 @@ Our AI which plays Texas Holdem
 from Player import Player
 from scipy.special import comb
 from itertools import combinations
+from math import exp
 
 def filter_by_suit(suit, cards):
     return list(filter(lambda x: x[0] == suit, cards))
@@ -21,6 +22,9 @@ class AI(Player):
         'R': 0,
     }  
 
+    DEFAULT_PK = 0.7
+    DEFAULT_POT_FACT = 1/300
+    
     ORDERING = ['RF', 'SF', 'FK', 'FH', 'FL', 'ST', 'TK', 'TP', 'PA']
 
     def __init__(self, money):
@@ -34,8 +38,10 @@ class AI(Player):
         cards = self.hand + game.board
         players = len(game.players)
         cardsInDeck = len(game.deck)
-        unknownCards = cardsInDeck + (players-1) * 2
-        left = self.CARDSLEFT[game.stage]
+        unknownCards = 52 - len(cards)
+        left = 7 - len(cards)
+        if left == 0:
+            return
         self.probs = {}
         self.probs['RF'] = self.royal_flush(game, cards, cardsInDeck, left) 
         self.probs['SF'] = self.straight_flush(game, cards, cardsInDeck, left) 
@@ -63,8 +69,10 @@ class AI(Player):
         cards = game.board
         players = len(game.players)
         cardsInDeck = len(game.deck)
-        unknownCards = cardsInDeck + (players-1) * 2
+        unknownCards = 52 - len(cards)
         left = 7 - len(game.board)
+        if left == 0:
+            return
         self.otherProbs = {}
         self.otherProbs['RF'] = self.royal_flush(game, cards, cardsInDeck, left) 
         self.otherProbs['SF'] = self.straight_flush(game, cards, cardsInDeck, left) 
@@ -214,8 +222,8 @@ class AI(Player):
                     if freedomMut >= 0:
                         N = 52 - wrong - 3
                         k = freedomMut
-                        mutProb = comb(4-rankCount,1)*(comb(N, k)/comb(52-known, freedom))
-                rankProb -= mutProb
+                        mutProb = comb(4-rankCount,1)*(comb(N, k)/comb(52-known, left))
+                rankProb -= mutProb * rankProb
                 cumProb += rankProb
         return cumProb
 
@@ -254,8 +262,8 @@ class AI(Player):
                             k = freedomMut
                             rankProb = comb(4-rankCount, 2) * (comb(N, k)/comb(52-known, freedom)) #4C2 ways to make this particular pair (since we ignored suit)
                             mutProb += rankProb * pairProb
-            pairProb -= mutProb
-            cumProb += pairProb
+                pairProb -= mutProb
+                cumProb += pairProb
         return cumProb
 
     def pair(self, game, cards, inDeck, left):
@@ -265,33 +273,40 @@ class AI(Player):
             rankCount = len(filter_by_rank(rank, cards))
             wrong = known - rankCount
             freedom = left - (2-rankCount)
+            rankProb = 0
             if freedom >= 0:
                 N = 52 - wrong - 2
                 k = freedom
                 rankProb = comb(4-rankCount, 2) * (comb(N, k)/comb(52-known, left)) #4C2 ways to make this particular pair (since we ignored suit)
                 mutProb = 0
                 if freedom > 0:
-                    mutProb = comb(4-rankCount, 1) * (comb(N-1, k-1)/comb(52-known, left-1))
-                rankProb -= mutProb
+                    mutProb = comb(4-rankCount, 1) * (comb(N-1, k-1)/comb(52-known, left))
+                rankProb -= mutProb * rankProb
             cumProb += rankProb
         return cumProb
 
     def better_hands(self, hand):
         return self.ORDERING[:self.ORDERING.index(hand)]
 
-    def estimate_bet_prob(self, oBH, pSize, pK):
+    def estimate_bet_prob(self, oBH, pSize, pK, potFact=None):
         """
         Function used to model the probability that an opponent will bet
         Takes a probability that the opponent has the best hand, a pot size,
         and a betting constant used to model how aggressive a player is
         """
-        r = pK * pSize
+        if potFact is None:
+            potFact = self.DEFAULT_POT_FACT
+        pfact = pSize * potFact
+        pfact = 1/(1+exp(pfact))
+        r = (pfact + pK)/2
         return oBH**r
 
     def model_opponent(self, bet, pSize=None, pK=None):
         """
         Returns the probability than an opponent has a better hand than you 
         """
+        if pK is None:
+            pK = self.DEFAULT_PK
         soFar = 0
         if not bet:
             for hands in self.ORDERING[1:]:
@@ -321,12 +336,46 @@ class AI(Player):
         Takes a list of players still in the game and a list of players who bet
         and a list of all the player still in the game
         """
+        if len(total) == 0:
+            return 1 #There's no one else left
         nonbets = [x for x in total if x not in bettors]
         nonBetProb = self.modelOpponent(False)
         totProb = 0
         for x in range(len(nonbets)):
             totProb += nonBetProb - (nonBetProb * totProb)
-            
+        for x in range(len(bettors)):
+            #TODO add player specific pKs
+            betProb = self.model_opponent(True, )
+        return 1-totProb
+
+    def training_prob_bh(self, game, bettors, nonbettors, potSize):
+        """
+        Takes a number of players still in the game and a number of players who bet
+        and a game
+        """
+        if bettors + nonbettors == 0:
+            return 1
+        self.calc_self_probs(game)
+        self.calc_other_probs(game)
+        self.debug_probs(game)
+        nonBetProb = self.model_opponent(False, potSize)
+        betProb = self.model_opponent(True, potSize)
+        totProb = 0
+        for x in range(nonbettors):
+            totProb += nonBetProb - (nonBetProb * totProb)
+        for x in range(bettors):
+            totProb += betProb - (betProb * totProb)
+        return 1 - totProb 
+
+    def debug_probs(self, game):
+        for k, v in self.probs.items():
+            if v >1 or v < 0:
+                print(f"{k} gives incorrect prob {v} for player hand")
+                print(f"The following hand {self.hand} and board {game.board} caused this error")
+        for k, v in self.otherProbs.items():
+            if v >1 or v < 0:
+                print(f"{k} gives incorrect prob {v} for nonplayer hand")
+                print(f"The following board {game.board} caused this error")
 
     def select_five_cards(self):
         raise NotImplementedError()

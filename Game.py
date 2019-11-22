@@ -25,6 +25,12 @@ class Game(object):
 
     DECK = list(product(RANKS, SUITS))
 
+    @classmethod
+    def serialize_card(cls, card):
+        num = cls.RANKS.index(card[1]) * 4
+        num += cls.SUITS.index(card[0])
+        return num
+
     def __init__(self, money, players=2):
         self.players = []
         self.board = [] ## 5 cards on board
