@@ -4,6 +4,7 @@ Our AI which plays Texas Holdem
 
 from Player import Player
 from scipy.special import comb
+from numpy import nan, isnan
 from itertools import combinations
 from math import exp
 
@@ -34,6 +35,20 @@ class AI(Player):
         # the ai always raise a minimum
         self.bet('r', self.min)
 
+    def fix_probs(self, toFix):
+        soFar = 0
+        for keys in self.ORDERING:
+            prob_key = toFix[keys]
+            if soFar >= 1:
+                toFix[keys] = 0
+            elif prob_key < 0:
+                toFix[keys] = 0
+            elif prob_key > 1:
+                toFix[keys] = 1 #Two straights can cause a calculation error
+            else:
+                soFar += prob_key
+
+
     def calc_self_probs(self, game):
         cards = self.hand + game.board
         players = len(game.players)
@@ -51,7 +66,7 @@ class AI(Player):
         self.probs['ST'] = self.straight(game, cards, cardsInDeck, left) -self.probs['RF'] - self.probs['SF']
         self.probs['TK'] = self.three_of_a_kind(game, cards, cardsInDeck, left) - self.probs['FK'] - self.probs['FH']
         self.probs['TP'] = self.two_pair(game, cards, cardsInDeck, left) - self.probs['FH']
-        self.probs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.probs['FH'] - self.probs['TK'] -self.probs['TP'] - self.probs['FK']
+        self.probs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.probs['FH'] -self.probs['TP'] 
 
     def p_oppbetter_hand(self, hand):
         """
@@ -151,6 +166,8 @@ class AI(Player):
             rank1Count = len(filter_by_rank(pair[0], cards))
             rank2Count = len(filter_by_rank(pair[1], cards))
             ranksCount = rank1Count + rank2Count
+            if ranksCount == 5:
+                return 1
             wrong = known - ranksCount
             freedom = left - (5-ranksCount)
             if freedom >= 0:
@@ -206,6 +223,8 @@ class AI(Player):
         cumProb = 0
         for rank in game.RANKS:
             rankCount = len(filter_by_rank(rank, cards))
+            if rankCount == 3:
+                return 1
             wrong = known - rankCount
             freedom = left - (3-rankCount)
             rankProb = 0
@@ -247,7 +266,7 @@ class AI(Player):
                 elif rank2Count > 2 and rank1Count < 2:
                     pairProb = comb(4-rank1Count, 2) * comb(N, k)/comb(52-known, left)
                 else:
-                    pairProb = 1
+                    return 1
                 mutProb = 0
                 if freedom > 0:
                     mutProb = comb(4-rank1Count, 1) * (comb(N-1, k-1)/comb(52-known, left-1))
@@ -271,6 +290,8 @@ class AI(Player):
         cumProb = 0
         for rank in game.RANKS:
             rankCount = len(filter_by_rank(rank, cards))
+            if rankCount == 2:
+                return 1
             wrong = known - rankCount
             freedom = left - (2-rankCount)
             rankProb = 0
@@ -299,6 +320,9 @@ class AI(Player):
         pfact = pSize * potFact
         pfact = 1/(1+exp(pfact))
         r = (pfact + pK)/2
+        if isnan(oBH**r):
+            print(f"nan found r: {r} oBH: {oBH}")
+            print(self.otherProbs)
         return oBH**r
 
     def model_opponent(self, bet, pSize=None, pK=None):
@@ -320,13 +344,15 @@ class AI(Player):
             p_bet = 0
             for hands in self.ORDERING:
                 bHprob = (1-self.p_oppbetter_hand(hands)) 
-                p_bet += self.estimate_bet_prob(bHprob, pSize, pK) * self.otherProbs[hands]
+                if self.otherProbs[hands] > 0:
+                    p_bet += self.estimate_bet_prob(bHprob, pSize, pK) * self.otherProbs[hands]
             totProb = 0
             for hands in self.ORDERING[1:]:
                 hand_prob = 0
                 for h in self.better_hands(hands):
                     bHprob = (1-self.p_oppbetter_hand(h)) 
-                    hand_prob += self.estimate_bet_prob(bHprob, pSize, pK) * self.otherProbs[h]
+                    if self.otherProbs[h] > 0:
+                        hand_prob += self.estimate_bet_prob(bHprob, pSize, pK) * self.otherProbs[h]
                 hand_prob = hand_prob/p_bet
                 totProb += hand_prob * self.probs[hands]
             return totProb
@@ -339,13 +365,14 @@ class AI(Player):
         if len(total) == 0:
             return 1 #There's no one else left
         nonbets = [x for x in total if x not in bettors]
-        nonBetProb = self.modelOpponent(False)
+        nonBetProb = self.model_opponent(False)
         totProb = 0
         for x in range(len(nonbets)):
             totProb += nonBetProb - (nonBetProb * totProb)
         for x in range(len(bettors)):
             #TODO add player specific pKs
-            betProb = self.model_opponent(True, )
+            betProb = self.model_opponent(True)
+            totProb += betProb - (betProb * totProb)
         return 1-totProb
 
     def training_prob_bh(self, game, bettors, nonbettors, potSize):
@@ -357,6 +384,8 @@ class AI(Player):
             return 1
         self.calc_self_probs(game)
         self.calc_other_probs(game)
+        self.fix_probs(self.probs)
+        self.fix_probs(self.otherProbs)
         self.debug_probs(game)
         nonBetProb = self.model_opponent(False, potSize)
         betProb = self.model_opponent(True, potSize)
@@ -372,6 +401,7 @@ class AI(Player):
             if v >1 or v < 0:
                 print(f"{k} gives incorrect prob {v} for player hand")
                 print(f"The following hand {self.hand} and board {game.board} caused this error")
+                print(self.probs)
         for k, v in self.otherProbs.items():
             if v >1 or v < 0:
                 print(f"{k} gives incorrect prob {v} for nonplayer hand")

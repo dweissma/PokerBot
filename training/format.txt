@@ -1,2 +1,2 @@
 Processed hands are in the format:
-hand   board    pot    bet_players    undecided_players   result  bet   net
+hand   board    pot    bet_players    undecided_players   result  bet   net  bayesian_net_output

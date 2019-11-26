@@ -12,6 +12,8 @@ OUTPUT_DIR = './training/processed/with_probs/'
 def convert_card(card):
     rank = card[0]
     suit = card[1]
+    if rank == "T":
+        rank = "10"
     suit = suit.upper()
     return (suit, rank)
 
@@ -32,14 +34,19 @@ for files in dirs:
             hand = ast.literal_eval(d[0])
             hand = [convert_card(x) for x in hand]
             b = ast.literal_eval(d[1])
-            g.board = [convert_card(x) for x in b]
+            b = [convert_card(x) for x in b]
+            g.board = b
             a.hand = hand
             pot = int(d[2])
             bet_players = int(d[3])
             und_players = int(d[4])
             g.players = [None for x in range(bet_players + und_players)]
             prob = a.training_prob_bh(g, bet_players, und_players, pot)
-            decisions += "\t" + str(prob) + "\n"
-            out.write(decisions)
+            d[0] = str(hand)
+            d[1] = str(b)
+            d.append(str(prob))
+            d = "\t".join(d)
+            d += "\n"
+            out.write(d)
 
 
