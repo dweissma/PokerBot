@@ -7,6 +7,9 @@ from scipy.special import comb
 from numpy import nan, isnan
 from itertools import combinations
 from math import exp
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 def filter_by_suit(suit, cards):
     return list(filter(lambda x: x[0] == suit, cards))
@@ -14,7 +17,7 @@ def filter_by_suit(suit, cards):
 def filter_by_rank(rank, cards):
     return list(filter(lambda x: x[1] == rank, cards))
 
-class AI(Player):
+class AI(Player, nn.Module):
     CARDSLEFT = {
         'P': 7,
         'B': 5,
@@ -29,7 +32,17 @@ class AI(Player):
     ORDERING = ['RF', 'SF', 'FK', 'FH', 'FL', 'ST', 'TK', 'TP', 'PA']
 
     def __init__(self, money):
-        super().__init__(money)
+        super(AI, self).__init__(money)
+        self.inputLayer = nn.Linear(11, 10)
+        self.hidden = nn.Linear(10, 10)
+        self.output = nn.Linear(10, 2)
+        #First output node tells whether to fold or not and the second decides how much to bet
+
+    def forward(self, x):
+        x = F.relu(self.inputLayer(x))
+        x = F.relu(self.hidden(x))
+        x = F.relu(self.output(x))
+        return x
 
     def play(self):
         # the ai always raise a minimum
