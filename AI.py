@@ -44,6 +44,15 @@ class AI(Player, nn.Module):
         x = F.relu(self.output(x))
         return x
 
+    def calc_loss(self, outcome, bet, output):
+        if outcome < 0:
+            target = (50, 0)
+        else:
+            target = (0, bet)
+        output[0] = output[0] * 50
+        return nn.MSELoss(output, target)
+
+    
     def play(self):
         # the ai always raise a minimum
         self.bet('r', self.min)
