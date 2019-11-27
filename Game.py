@@ -18,7 +18,7 @@ class Game(object):
         'turn':'T',
         'river':'R',
     }    
-    RANKS = ['2', '3',' 4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+    RANKS = ['2', '3','4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
     SUITS = ['H', 'D', 'S', 'C'] # Heart-H, Diamond-D, Spade-S, Club-C
 
     #A card is represented as a suit rank tuple given as (suit, rank)
@@ -29,7 +29,7 @@ class Game(object):
     @classmethod
     def serialize_card(cls, card):
         num = cls.RANKS.index(card[1]) * 4
-        num += cls.SUITS.index(card[0])
+        num += cls.SUITS.index(card[0]) + 1
         return num
 
     def __init__(self, money, players=2):

@@ -1,0 +1,3 @@
+torchvision
+func_timeout
+scipy

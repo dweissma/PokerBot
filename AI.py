@@ -32,7 +32,8 @@ class AI(Player, nn.Module):
     ORDERING = ['RF', 'SF', 'FK', 'FH', 'FL', 'ST', 'TK', 'TP', 'PA']
 
     def __init__(self, money):
-        super(AI, self).__init__(money)
+        Player.__init__(self, money)
+        nn.Module.__init__(self)
         self.inputLayer = nn.Linear(11, 10)
         self.hidden = nn.Linear(10, 10)
         self.output = nn.Linear(10, 2)
@@ -44,14 +45,20 @@ class AI(Player, nn.Module):
         x = F.relu(self.output(x))
         return x
 
-    def calc_loss(self, outcome, bet, output):
+    def to_target(self, binfo):
+        outcome = binfo[0]
+        bet = binfo[1]
         if outcome < 0:
             target = (50, 0)
         else:
             target = (0, bet)
-        output[0] = output[0] * 50
-        return nn.MSELoss(output, target)
+        return target
 
+    def calc_loss(self, bInfo, output):
+        target = [self.to_target(x) for x in bInfo]
+        target = torch.FloatTensor(target)
+        criterion = nn.MSELoss()
+        return criterion(output, target)
     
     def play(self):
         # the ai always raise a minimum
