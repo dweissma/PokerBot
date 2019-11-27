@@ -11,12 +11,13 @@ from math import cos, pi
 import os
 import ast
 DATADIR = "./training/processed/with_probs/"
-PARAMDIR = './params/test.pkl'
+PARAMDIR = './params/100_epochs.pkl'
 BATCHSIZE = 100
+EPOCHS = 100
 
 getNext = True
 
-def learning_rate(n, cycleLen = 20, max_max = 0.01, min_max = 0.00001, abs_min = 0.00001, batch_num = 10000):
+def learning_rate(n, cycleLen = 200, max_max = 0.01, min_max = 0.00001, abs_min = 0.00001, batch_num = 1000000):
     #Use a cyclic learning rate https://arxiv.org/abs/1506.01186
     return abs(cos(n*(pi/cycleLen))) * ((max_max-abs_min) + ((min_max-max_max)/batch_num)) + abs_min
 
@@ -62,25 +63,26 @@ batchCount = 0
 net = AI(0)
 optimizer = optim.SGD(net.parameters(), lr=0.01)
 datasets = os.listdir(DATADIR) 
-shuffle(datasets)#Do training in a random order
-for ds in datasets:
-    print(f"starting {ds}")
-    f = str(open(DATADIR + ds).read())
-    f = f.split("\n")
-    getNext = False
-    while not getNext:
-        batch = pop_batch_size(f, BATCHSIZE)
-        if batch:
-            batchIn = [make_node(x) for x in batch]
-            batchIn = torch.FloatTensor(batchIn)
-            batchInfo = [make_output_info(x) for x in batch]
-            lr = learning_rate(batchCount)
-            set_lr(lr, optimizer)
-            optimizer.zero_grad()
-            output = net(batchIn)
-            loss = net.calc_loss(batchInfo, output)
-            loss.backward()
-            optimizer.step()
-            batchCount += 1
+for x in range(EPOCHS):
+    print(f"starting epoch {x}")
+    shuffle(datasets)#Do training in a random order
+    for ds in datasets:
+        f = str(open(DATADIR + ds).read())
+        f = f.split("\n")
+        getNext = False
+        while not getNext:
+            batch = pop_batch_size(f, BATCHSIZE)
+            if batch:
+                batchIn = [make_node(x) for x in batch]
+                batchIn = torch.FloatTensor(batchIn)
+                batchInfo = [make_output_info(x) for x in batch]
+                lr = learning_rate(batchCount)
+                set_lr(lr, optimizer)
+                optimizer.zero_grad()
+                output = net(batchIn)
+                loss = net.calc_loss(batchInfo, output)
+                loss.backward()
+                optimizer.step()
+                batchCount += 1
 
 torch.save(net.state_dict(), PARAMDIR)
