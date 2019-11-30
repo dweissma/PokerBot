@@ -3,10 +3,11 @@ Our AI which plays Texas Holdem
 """
 
 from Player import Player
+import torch.optim as optim
 from scipy.special import comb
-from numpy import nan, isnan
+from numpy import nan, isnan, arctan
 from itertools import combinations
-from math import exp
+from math import exp, pi
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -31,19 +32,39 @@ class AI(Player, nn.Module):
     
     ORDERING = ['RF', 'SF', 'FK', 'FH', 'FL', 'ST', 'TK', 'TP', 'PA']
 
-    def __init__(self, money):
+    def __init__(self, money, learnRate=0.01):
         Player.__init__(self, money)
         nn.Module.__init__(self)
         self.inputLayer = nn.Linear(11, 10)
         self.hidden = nn.Linear(10, 10)
         self.output = nn.Linear(10, 2)
+        self.pKs = {}
+        self.pKSizes = {}
+        self.folded = []
+        self.learnRate = learnRate
+        self.decisions = []
+        self.optimizer = optim.SGD(self.parameters(), lr=0.01)
         #First output node tells whether to fold or not and the second decides how much to bet
+
+    def load_model_from_path(self, model):
+        self.load_state_dict(torch.load(model))
+
+    def load_model_from_dict(self, model):
+        self.load_state_dict(model)
 
     def forward(self, x):
         x = F.relu(self.inputLayer(x))
         x = F.relu(self.hidden(x))
         x = F.relu(self.output(x))
         return x
+
+    def adjust_pk(self, pK, bet, n):
+        learnRate = self.learnRate
+        if bet:
+            pK -= pK * learnRate * ((arctan(-n * learnRate))/(pi/2) + 1)
+        else:
+            pK += 1/pK * learnRate * ((arctan(-n * learnRate))/(pi/2) + 1)
+        return pK
 
     def to_target(self, binfo):
         outcome = binfo[0]
@@ -60,9 +81,89 @@ class AI(Player, nn.Module):
         criterion = nn.MSELoss()
         return criterion(output, target)
     
-    def play(self):
-        # the ai always raise a minimum
-        self.bet('r', self.min)
+    def do_loss(self, won, winningHand, game):
+        targets = []
+        if won:
+            return #No training required since we won
+        else:
+            if game.compare_hands(self.hand + game.board, winningHand + game.board) == 0:
+                for n, x in enumerate([x[1].tolist()[0] for x in self.decisions]):
+                    k = n+1
+                    if k == len(self.decisions):
+                        targets.append((0, game.pot/k))
+                    else:
+                        targets.append((x))
+                targets = torch.FloatTensor(targets)
+            else:
+                for x in self.decisions:
+                    targets.append((50, 0))
+                targets = torch.FloatTensor(targets)
+        targets = torch.FloatTensor(targets)
+        output = [x[1] for x in self.decisions]
+        output = torch.cat(output)
+        self.optimizer.zero_grad()
+        criterion = nn.MSELoss()
+        loss = criterion(output, targets)
+        loss.backward(retain_graph=True) 
+        self.optimizer.step()
+
+    def bet(self, game):
+        playerIndex = [x.id for x in game.players].index(self.id)
+        bettors = playerIndex - game.bets[:playerIndex].count(0)
+        if game.round == 1:
+            nonbettors = len(game.players) -1 -playerIndex
+        else:
+            nonbettors = len(game.players) -1 -playerIndex - game.bets[playerIndex:].count(0)
+        bNetOut = self.prob_best_hand(game)
+        #Do adjustments
+        if game.round == 1:
+            self.folded = []
+            for i, p in enumerate(game.players[:playerIndex]):
+                if game.bets[i] == 0:
+                    self.folded.append(p.id)
+                    try:
+                        self.pKSizes[p.id] += 1
+                    except KeyError:
+                        self.pKSizes[p.id] = 1
+                        self.pKs[p.id] = self.DEFAULT_PK
+                    self.pKs[p.id] = self.adjust_pk(self.pKs[p.id], False, self.pKSizes[p.id])
+                else:
+                    try:
+                        self.pKSizes[p.id] += 1
+                    except KeyError:
+                        self.pKSizes[p.id] = 1
+                        self.pKs[p.id] = self.DEFAULT_PK
+                    self.pKs[p.id] = self.adjust_pk(self.pKs[p.id], True, self.pKSizes[p.id])
+        else:
+            for i, p in enumerate(game.players[:playerIndex]):
+                if i != playerIndex:
+                    if game.bets[i] == 0 and p.id not in self.folded:
+                        self.folded.append(p.id)
+                        self.pKSizes[p.id] += 1
+                        self.pKs[p.id] = self.adjust_pk(self.pKs[p.id], False, self.pKSizes[p.id])
+                    else:
+                        self.pKSizes[p.id] += 1
+                        self.pKs[p.id] = self.adjust_pk(self.pKs[p.id], True, self.pKSizes[p.id])
+        hand = [game.serialize_card(x) for x in self.hand]
+        board = [game.serialize_card(x) for x in game.board]
+        while len(board) < 5:
+            board.append(0)
+        pot = game.pot
+        t = [hand + board + [pot, bettors, nonbettors, bNetOut]]
+        tensor = torch.FloatTensor(t)
+        out = self(tensor)
+        self.decisions.append((t, out))
+        out = out.tolist()[0]
+        if out[0] > 25:
+            return ("f", 0)
+        elif out[1] - max(game.bets) <= game.min and max(game.bets) < self.money:
+            return ("c", game.min)
+        elif out[1] - max(game.bets) > game.min and out[1] - game.bets[playerIndex] > self.money:
+            return ("r", self.money)
+        elif out[1] - max(game.bets) > game.min:
+            return ("r", out[1] - game.bets[playerIndex])
+        else:
+            return ("a", self.money)
 
     def fix_probs(self, toFix):
         soFar = 0
@@ -386,22 +487,39 @@ class AI(Player, nn.Module):
                 totProb += hand_prob * self.probs[hands]
             return totProb
 
-    def prob_best_hand(self, bettors, total):
+    def prob_best_hand(self, game):
         """
         Takes a list of players still in the game and a list of players who bet
         and a list of all the player still in the game
         """
-        if len(total) == 0:
+        self.calc_self_probs(game)
+        self.calc_other_probs(game)
+        self.fix_probs(self.probs)
+        self.fix_probs(self.otherProbs)
+        playerIndex = [x.id for x in game.players].index(self.id)
+        bettors = playerIndex - game.bets[:playerIndex].count(0)
+        if game.round == 1:
+            nonbettors = len(game.players) -1 -playerIndex
+        else:
+            nonbettors = len(game.players) -1 -playerIndex - game.bets[playerIndex:].count(0)
+        total = bettors + nonbettors
+        if total == 0:
             return 1 #There's no one else left
-        nonbets = [x for x in total if x not in bettors]
         nonBetProb = self.model_opponent(False)
         totProb = 0
-        for x in range(len(nonbets)):
+        for x in range(nonbettors):
             totProb += nonBetProb - (nonBetProb * totProb)
-        for x in range(len(bettors)):
-            #TODO add player specific pKs
-            betProb = self.model_opponent(True)
-            totProb += betProb - (betProb * totProb)
+        for i, x in enumerate(game.players[:playerIndex]):
+            if game.bets[i] != 0:
+                try:
+                    pK = self.pKs[x.id]
+                except KeyError:
+                    pK = self.DEFAULT_PK
+                    self.pKSizes[x.id] = 0
+                    self.pKs[x.id] = self.DEFAULT_PK
+                pSize = game.pot
+                betProb = self.model_opponent(True, pSize, pK)
+                totProb += betProb - (betProb * totProb)
         return 1-totProb
 
     def training_prob_bh(self, game, bettors, nonbettors, potSize):

@@ -2,24 +2,28 @@
 File for basic player class
 """
 
+from random import randint
+
 
 class Player(object):
     def __init__(self, money):
         self.hand = [] #The player's hand
         self.money = money #How much money/chips the player has
         self.isPlaying = True # if fold, turn it to false
+        self.id = randint(1, 1000)
 
-    def bet(self, action, amount): 
+    def bet(self, game): 
         """
         Decides whether the player would like to
         call fold or raise. Returns a tuple with 
-        the first element being either 'c', 'f', or 'r'
-        for call, fold, and raise respectively.
+        the first element being either 'c', 'f', 'r', or 'a'
+        for call, fold, raise, and all-in respectively.
         The second element being the amount of the bet
         if applicable
         return -1 if not
         """
-
+        pass
+        """
         if action == 'r':
             self.money -= amount
             self.pot += amount
@@ -27,6 +31,7 @@ class Player(object):
             print("Hand: "+self.hand)
         else:
             self.isPlaying = False
+        """
 
 
     def cardPrinter(self, cards):
