@@ -5,11 +5,11 @@ from random import randint
 from math import sqrt
 import torch
 
-GAMES = 300
+GAMES = 250
 HANDS = 100 #HANDS PER GAME
-OUTPUT = "./params/self300.pkl"
+OUTPUT = "./params/self1000.pkl"
 LROUT = "./params/LRLog.txt"
-startingSD = 0.1
+startingSD = 0.19793571591856582
 
 
 def get_lr(n):
@@ -19,8 +19,8 @@ def get_lr(n):
     else:
         return get_lr(n)
 
-winning_lr = 0.1
-winning_dict = torch.load("./params/100_epochs.pkl")
+winning_lr = 0.2143117690551147 #From the end of 500
+winning_dict = torch.load("./params/self750.pkl")
 with open(LROUT, "a+") as f:
     for i in range(GAMES):
         n = i + 1
