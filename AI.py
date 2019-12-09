@@ -32,7 +32,7 @@ class AI(Player, nn.Module):
     
     ORDERING = ['RF', 'SF', 'FK', 'FH', 'FL', 'ST', 'TK', 'TP', 'PA']
 
-    def __init__(self, money, learnRate=0.01):
+    def __init__(self, money, learnRate=0.4):
         Player.__init__(self, money)
         nn.Module.__init__(self)
         self.inputLayer = nn.Linear(11, 10)
@@ -53,9 +53,9 @@ class AI(Player, nn.Module):
         self.load_state_dict(model)
 
     def forward(self, x):
-        x = F.relu(self.inputLayer(x))
-        x = F.relu(self.hidden(x))
-        x = F.relu(self.output(x))
+        x = torch.sigmoid(self.inputLayer(x))
+        x = torch.sigmoid(self.hidden(x))
+        x = torch.sigmoid(self.output(x))
         return x
 
     def adjust_pk(self, pK, bet, n):
@@ -70,9 +70,9 @@ class AI(Player, nn.Module):
         outcome = binfo[0]
         bet = binfo[1]
         if outcome < 0:
-            target = (50, 0)
+            target = (1, 0)
         else:
-            target = (0, bet)
+            target = (0, bet/5000)
         return target
 
     def calc_loss(self, bInfo, output):
@@ -90,13 +90,13 @@ class AI(Player, nn.Module):
                 for n, x in enumerate([x[1].tolist()[0] for x in self.decisions]):
                     k = n+1
                     if k == len(self.decisions):
-                        targets.append((0, game.pot/k))
+                        targets.append((0, (game.pot/k)/self.money))
                     else:
                         targets.append((x))
                 targets = torch.FloatTensor(targets)
             else:
                 for x in self.decisions:
-                    targets.append((50, 0))
+                    targets.append((1, 0))
                 targets = torch.FloatTensor(targets)
         targets = torch.FloatTensor(targets)
         output = [x[1] for x in self.decisions]
@@ -154,9 +154,19 @@ class AI(Player, nn.Module):
         out = self(tensor)
         self.decisions.append((t, out))
         out = out.tolist()[0]
-        if out[0] > 25:
+        try:
+            out[1] *= self.money
+            out[1] = int(out[1])
+            plist = [p.id for p in game.players]
+            selfI = plist.index(self.id)
+            betI = game.bets[selfI]
+            w = max(game.bets)
+            callVal = w-betI
+        except:
+            return ("c", 0)
+        if out[0] > 0.5 and out[1] < callVal:
             return ("f", 0)
-        elif out[1] - max(game.bets) <= game.min and max(game.bets) < self.money:
+        elif (out[1] - max(game.bets) <= game.min and max(game.bets) < self.money) or out[1] < callVal:
             return ("c", game.min)
         elif out[1] - max(game.bets) > game.min and out[1] - game.bets[playerIndex] > self.money:
             return ("r", self.money)

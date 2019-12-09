@@ -52,10 +52,10 @@ class Player(object):
             print("     ______ ", end="")
         print()
         for i in range(0, l):
-            if len(cards[i][0]) == 1:
-                print("    |" + cards[i][0] + "     |", end="")
+            if len(cards[i][1]) == 1:
+                print("    |" + cards[i][1] + "     |", end="")
             else:
-                print("    |" + cards[i][0] + "    |", end="")
+                print("    |" + cards[i][1] + "    |", end="")
         print()
         for i in range(0, l):
             print("    |      |", end="")
@@ -64,7 +64,7 @@ class Player(object):
             print("    |      |", end="")
         print()
         for i in range(0, l):
-            print("    |     " + cards[i][1] + "|", end="")
+            print("    |     " + cards[i][0] + "|", end="")
         print()
         for i in range(0, l):
             print("     ------ ", end="")

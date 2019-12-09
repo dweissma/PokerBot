@@ -47,6 +47,7 @@ class Game(object):
         self.pot = 0
         self.min = 0 # every time you bet, should greater than this number
         self.deck = self.DECK[:]
+        self.playerCodes = {}
         ids = []
         for p in self.players:
             p.decisions = []
@@ -74,6 +75,84 @@ class Game(object):
             if p.id == i:
                 return p
         raise KeyError("No player associated to the given value")
+
+    def demo(self):
+        a_i = 1
+        p_i = 1
+        for p in self.players:
+            if isinstance(p, AI):
+                self.playerCodes[p.id] = f"AI{a_i}"
+                a_i += 1
+            else:
+                self.playerCodes[p.id] = f"Player{p_i}"
+                p_i += 1
+        while all([p.money > 0 for p in self.players]):
+            self.play_hand_demo()            
+
+    def play_hand_demo(self):
+        """
+        Plays through hands printing events as they happen
+        """
+        self.deck = self.DECK[:]
+        for p in self.players:
+            p.hand = []
+        self.board = []
+        self.shuffleDeck()
+        self.rotate_players()
+        self.round = 1
+        self.assignCards()
+        self.bets = [0 for x in range(len(self.players))]
+        self.pot = 75
+        self.min = 50
+        self.players[0].money -= 25
+        self.players[1].money -= 50
+        self.bets[0] = 25
+        self.bets[1] = 50
+        self.inGame = set([x.id for x in self.players])
+        self.allIn = set([])
+        i = 2%len(self.players)
+        self.betting_round(i, demo=True)
+        i = 0
+        if len(self.inGame) > 1:
+            self.round += 1
+            self.assignCards()
+            self.betting_round(i, demo=True)
+        else:
+            winner = self.get_by_id(self.inGame.pop())
+            winner.money += self.pot
+            print(f"{self.playerCodes[winner.id]} won this hand and {self.pot} dollars")
+            return
+        if len(self.inGame) > 1:
+            self.round += 1
+            self.assignCards()
+            self.betting_round(i, demo=True)
+        else:
+            winner = self.get_by_id(self.inGame.pop())
+            winner.money += self.pot
+            print(f"{self.playerCodes[winner.id]} won this hand and {self.pot} dollars")
+            return
+        if len(self.inGame) > 1:
+            self.round += 1
+            self.assignCards()
+            self.betting_round(i, demo=True)
+        else:
+            winner = self.get_by_id(self.inGame.pop())
+            winner.money += self.pot
+            print(f"{self.playerCodes[winner.id]} won this hand and {self.pot} dollars")
+            return 
+        if len(self.inGame) > 1:
+            try:
+                winner = self.showdown2()
+            except:
+                for p in self.inGame:
+                    player = self.get_by_id(p)
+                    player.money += self.pot/len(self.inGame)
+                    return #Hands are for all intensive purposes tied so training won't really work (skip this set)
+        else:
+            winner = self.get_by_id(self.inGame.pop())
+        winner.money += self.pot
+        print(f"{self.playerCodes[winner.id]} won this hand and {self.pot} dollars with a hand of {winner.hand}")
+        return
 
     def play_hand_train(self):
         """
@@ -157,17 +236,21 @@ class Game(object):
         winner.money += self.pot
         return
                 
-    def process_bet(self, bet, playerIndex):
+    def process_bet(self, bet, playerIndex, demo=False):
         r = bet[0]
         if r == "f":
             self.bets[playerIndex] = 0
             self.inGame.remove(self.players[playerIndex].id)
+            if demo:
+                print(f"{self.playerCodes[self.players[playerIndex].id]} has folded")
         elif r == "c":
             betI = self.bets[playerIndex]
             w = max(self.bets)
             self.players[playerIndex].money -= (w-betI)
             self.pot += (w-betI)
             self.bets[playerIndex] = w
+            if demo:
+                print(f"{self.playerCodes[self.players[playerIndex].id]} has called")
         elif r == "a":
             self.pot += self.players[playerIndex].money
             if self.players[playerIndex].money + self.bets[playerIndex] <= max(self.bets):
@@ -176,6 +259,8 @@ class Game(object):
                 self.bets[playerIndex] += self.players[playerIndex].money
             self.players[playerIndex].money = 0
             self.allIn.add(self.players[playerIndex].id)
+            if demo:
+                print(f"{self.playerCodes[self.players[playerIndex].id]} is all in")
         else:
             if bet[1] < self.min:
                 raise ValueError("Raise is less than the min raise")
@@ -185,6 +270,8 @@ class Game(object):
                 self.players[playerIndex].money -= b
                 self.pot += b
                 self.bets[playerIndex] = bet[1] + max(self.bets)
+                if demo:
+                    print(f"{self.playerCodes[self.players[playerIndex].id]} has raised {b}")
 
     def bets_done(self):
         if set(self.bets) - set([0, max(self.bets)]):
@@ -192,22 +279,24 @@ class Game(object):
         else:
             return True
 
-    def betting_round(self, initial):
+    def betting_round(self, initial, demo=False):
         i = initial
         b = self.players[i].bet(self)
-        self.process_bet(b, i)
+        p = self.players[i]
+        if p.id not in self.allIn and p.id in self.inGame:
+            self.process_bet(b, i, demo=demo)
         i += 1
         while i%len(self.players) != initial and len(self.inGame) > 1:
             p = self.players[i%len(self.players)]
             if p.id not in self.allIn and p.id in self.inGame:
                 b = p.bet(self)
-                self.process_bet(b, i%len(self.players))
+                self.process_bet(b, i%len(self.players), demo=demo)
             i += 1
         while not self.bets_done() and len(self.inGame) > 1:
             p = self.players[i%len(self.players)]
             if p.id not in self.allIn and p.id in self.inGame:
                 b = p.bet(self)
-                self.process_bet(b, i%len(self.players))
+                self.process_bet(b, i%len(self.players), demo=demo)
             i += 1
 
 
@@ -825,7 +914,14 @@ class Game(object):
 
 
 if __name__ == '__main__':
-    g = Game(0)
-    g.stage = 'P'
-    p = AI(0)
-    p.calc_self_probs(g)
+    players = []
+    startingPlayers = int(input("How many AIs would you like to play against?"))
+    for x in range(startingPlayers):
+        p = AI(5000)
+        p.load_model_from_path("./params/selfcons.pkl")
+        players.append(p)
+    u = User(5000)
+    players.append(u)
+    g = Game(players)
+    g.demo()
+    
