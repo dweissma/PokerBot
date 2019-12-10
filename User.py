@@ -9,7 +9,7 @@ import func_timeout
 
 class User(Player):
 
-    @func_timeout.func_set_timeout(90)
+    @func_timeout.func_set_timeout(180)
     def get_input(self):
         return input("It's your turn: ")
 

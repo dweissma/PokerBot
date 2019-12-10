@@ -32,7 +32,7 @@ class AI(Player, nn.Module):
     
     ORDERING = ['RF', 'SF', 'FK', 'FH', 'FL', 'ST', 'TK', 'TP', 'PA']
 
-    def __init__(self, money, learnRate=0.4):
+    def __init__(self, money, learnRate=0.1):
         Player.__init__(self, money)
         nn.Module.__init__(self)
         self.inputLayer = nn.Linear(11, 10)
@@ -90,7 +90,10 @@ class AI(Player, nn.Module):
                 for n, x in enumerate([x[1].tolist()[0] for x in self.decisions]):
                     k = n+1
                     if k == len(self.decisions):
-                        targets.append((0, (game.pot/k)/self.money))
+                        try:
+                            targets.append((0, (game.pot/k)/self.money))
+                        except:
+                            return 
                     else:
                         targets.append((x))
                 targets = torch.FloatTensor(targets)

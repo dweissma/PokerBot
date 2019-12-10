@@ -86,8 +86,11 @@ class Game(object):
             else:
                 self.playerCodes[p.id] = f"Player{p_i}"
                 p_i += 1
+        hands = 0
         while all([p.money > 0 for p in self.players]):
-            self.play_hand_demo()            
+            print(f"You've played {hands} hands")
+            self.play_hand_demo()       
+            hands += 1
 
     def play_hand_demo(self):
         """
@@ -918,7 +921,7 @@ if __name__ == '__main__':
     startingPlayers = int(input("How many AIs would you like to play against?"))
     for x in range(startingPlayers):
         p = AI(5000)
-        p.load_model_from_path("./params/selfcons.pkl")
+        p.load_model_from_path("./params/best.pkl")
         players.append(p)
     u = User(5000)
     players.append(u)
