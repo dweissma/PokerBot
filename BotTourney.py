@@ -11,7 +11,7 @@ import torch
 
 
 OUTPUT = "./params/best.pkl"
-HANDS = 1000
+HANDS = 10000
 
 players = []
 
