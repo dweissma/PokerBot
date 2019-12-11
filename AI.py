@@ -167,9 +167,9 @@ class AI(Player, nn.Module):
             callVal = w-betI
         except:
             return ("c", 0)
-        if out[0] > 0.5 and out[1] + game.pot - callVal < callVal:
+        if out[0] > 0.5 and out[1] + (game.pot/(bettors + nonbettors)) - callVal < callVal:
             return ("f", 0)
-        elif (out[1] - max(game.bets) <= game.min and max(game.bets) < self.money) or out[1] + game.pot - callVal < callVal:
+        elif (out[1] - max(game.bets) <= game.min and max(game.bets) < self.money) or out[1] + (game.pot/(bettors + nonbettors)) - callVal < callVal:
             return ("c", game.min)
         elif out[1] - max(game.bets) > game.min and out[1] - game.bets[playerIndex] > self.money:
             return ("r", self.money)
