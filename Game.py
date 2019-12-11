@@ -921,7 +921,7 @@ if __name__ == '__main__':
     startingPlayers = int(input("How many AIs would you like to play against?"))
     for x in range(startingPlayers):
         p = AI(5000)
-        p.load_model_from_path("./params/best1.pkl")
+        p.load_model_from_path("./params/best.pkl")
         players.append(p)
     u = User(5000)
     players.append(u)
