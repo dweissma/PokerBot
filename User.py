@@ -30,8 +30,8 @@ class User(Player):
         self.cardPrinter(game.board)
         print("Press f to fold, c to call, r to raise")
         while True:
-            try:
                 # if we didnt get input within 90 seconds, fold
+            try:
                 try:
                     action = self.get_input()
                 except func_timeout.exceptions.FunctionTimedOut:
@@ -42,12 +42,12 @@ class User(Player):
                 else:
                     raise ValueError
             except ValueError:
-                print("Invalid input! Try again.")
+                action = input("Invalid input! Try again.")
 
         if action == 'r':
-            rasieAmount = int(input("How much do you want to raise? "))
             # get a valid raise
             while True:
+                rasieAmount = int(input("How much do you want to raise? "))
                 try:
                     if self.money >= rasieAmount >= game.min:
                         return ('r', rasieAmount)
