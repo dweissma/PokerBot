@@ -1,5 +1,6 @@
 """
-Makes hand objects from files
+Calculate the Bayesian net out put from each
+hand object
 """
 
 import os

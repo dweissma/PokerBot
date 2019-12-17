@@ -20,19 +20,9 @@ class Player(object):
         for call, fold, raise, and all-in respectively.
         The second element being the amount of the bet
         if applicable
-        return -1 if not
+        return None if not applicable
         """
         pass
-        """
-        if action == 'r':
-            self.money -= amount
-            self.pot += amount
-        elif action == 'c':
-            print("Hand: "+self.hand)
-        else:
-            self.isPlaying = False
-        """
-
 
     def cardPrinter(self, cards):
         """

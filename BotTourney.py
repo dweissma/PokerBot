@@ -1,5 +1,5 @@
 """
-Pits the various bots against each other
+Pits the various bots from training stages against each other
 """
 
 from Game import Game

@@ -1,5 +1,7 @@
 """
 Our AI which plays Texas Holdem
+Contains all implementation from both the neural net
+and the bayesian opponent modeling
 """
 
 from Player import Player
@@ -110,6 +112,7 @@ class AI(Player, nn.Module):
         loss.backward(retain_graph=True) 
         self.optimizer.step()
 
+#Decides how much to bet and whether or not to fold
     def bet(self, game):
         playerIndex = [x.id for x in game.players].index(self.id)
         bettors = playerIndex - game.bets[:playerIndex].count(0)
@@ -178,6 +181,7 @@ class AI(Player, nn.Module):
         else:
             return ("a", self.money)
 
+#Keeps probabilities in the range of a probability
     def fix_probs(self, toFix):
         soFar = 0
         for keys in self.ORDERING:
@@ -191,7 +195,7 @@ class AI(Player, nn.Module):
             else:
                 soFar += prob_key
 
-
+    #Calculate the probability of the AI having each hand
     def calc_self_probs(self, game):
         cards = self.hand + game.board
         players = len(game.players)
@@ -211,6 +215,7 @@ class AI(Player, nn.Module):
         self.probs['TP'] = self.two_pair(game, cards, cardsInDeck, left) - self.probs['FH']
         self.probs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.probs['FH'] -self.probs['TP'] 
 
+    #Calculates the probability that the opponent has a better hand than the given hand
     def p_oppbetter_hand(self, hand):
         """
         Uses the other probs dict to estimate a naive probability
@@ -223,6 +228,7 @@ class AI(Player, nn.Module):
         probs = [self.otherProbs[x] for x in self.ORDERING[:ind]]
         return sum(probs)
 
+    #Calculate the naive probability that an opponent has a given hand
     def calc_other_probs(self, game):
         cards = game.board
         players = len(game.players)
@@ -242,6 +248,8 @@ class AI(Player, nn.Module):
         self.otherProbs['TP'] = self.two_pair(game, cards, cardsInDeck, left) - self.otherProbs['FH']
         self.otherProbs['PA'] = self.pair(game, cards, cardsInDeck, left) - self.otherProbs['FH'] - self.otherProbs['TK'] -self.otherProbs['TP'] - self.otherProbs['FK']
 
+
+    #The next set of methods calculate the probability of a hand
     def royal_flush(self, game, cards, inDeck, left):
         known = len(cards)
         cumProb = 0
